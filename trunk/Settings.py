@@ -14,6 +14,14 @@ class Settings:
         except FileNotFoundError:
             return None
 
+    def get_download_folder(self):
+        try:
+            with open(self.settingsFileName) as json_file:
+                self.settingsData = json.load(json_file)
+            return self.settingsData["downloadFolder"]
+        except FileNotFoundError:
+            return None
+
     def write_settings(self):
         try:
             with open(self.settingsFileName, 'w') as outfile:

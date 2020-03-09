@@ -1,7 +1,6 @@
 
 
 
-
+# TODO Add size range to download if (200-300) size not found then (300-500)
 # TODO Add a json source file for the searchs
 # TODO Add a class menu to execute the different options, like changing setting or download the torrents
-# TODO Add a torrent downloader class

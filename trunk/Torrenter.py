@@ -1,8 +1,9 @@
-import time
+from operator import attrgetter
 
 from Settings import Settings
 from MediaParser import MediaParser
 from TvShows import TvShows
+from EZtv import EZtv
 
 
 def check_settings():
@@ -25,11 +26,31 @@ def process_tvshows():
         tvshow.process_filename(filename)
         if tvshow.match_tvshow(list_tvshows):
             list_tvshows.append(tvshow)
+    return list_tvshows
+
+
+def search_tvshows(list_tvshows):
+    eztv = EZtv()
+    for show in list_tvshows:
+        print('')
+        print('Getting show ' + str(show) + ' ...')
+        if show.imdb_id:
+            torrent_list = eztv.search_imdb(show.tvShowName, show.imdb_id, show.currentSeason,
+                                            show.currentEpisode + 1,
+                                            show.currentSeason + 1, 1)
+            if torrent_list:
+                sorted_list = sorted(torrent_list, key=attrgetter('size'))
+                for torrent in sorted_list:
+                    if eztv.download_torrent(torrent, settings.get_download_folder()):
+                        break
+            else:
+                print('No torrent found...')
 
 
 def main():
     check_settings()
-    process_tvshows()
+    list_tvshows = process_tvshows()
+    search_tvshows(list_tvshows)
 
 
 if __name__ == "__main__":

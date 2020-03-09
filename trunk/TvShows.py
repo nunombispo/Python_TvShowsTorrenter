@@ -1,22 +1,35 @@
+import os
 import PTN
 
 
 class TvShows:
     def __init__(self):
+        self.imdb_id = None
         self.tvShowName = None
         self.tvShowAlias = None
         self.currentSeason = None
         self.currentEpisode = None
-        self.nextSeason = None
-        self.nextEpisode = None
 
     def __str__(self):
-        text = self.tvShowName + " S" + str(self.currentSeason) + " E" + str(self.currentEpisode)
+        if self.imdb_id:
+            text = self.tvShowName + " IMDB: " + self.imdb_id + " S" + str(self.currentSeason) + " E" + str(self.currentEpisode)
+        else:
+            text = self.tvShowName + " S" + str(self.currentSeason) + " E" + str(
+                self.currentEpisode)
         return text
+
+    def process_imdb_from_file(self, filename):
+        new_filename = filename.split('.')[-1]
+        self.imdb_id = new_filename
 
     def process_filename(self, filename):
         try:
             filename = filename.replace('_', '.')
+            # print(filename)
+            # Check for IMDB file
+            if 'imdb' in filename.lower():
+                self.process_imdb_from_file(filename)
+                filename = filename.replace('imdb', '')
             info = PTN.parse(filename)
             self.tvShowName = info['title'].strip().title()
             # Clean Los Angeles
@@ -31,7 +44,9 @@ class TvShows:
             self.currentSeason = info['season']
             self.currentEpisode = info['episode']
         except KeyError:
+            self.imdb_id = None
             self.tvShowName = None
+            self.tvShowAlias = None
             self.currentSeason = None
             self.currentEpisode = None
 
@@ -45,11 +60,13 @@ class TvShows:
                 for show in list_tvshows:
                     if self.tvShowName.lower() == show.tvShowName.lower():
                         found = True
+                        if self.imdb_id:
+                            show.imdb_id = self.imdb_id
                         if int(self.currentSeason) > int(show.currentSeason):
                             show.currentSeason = self.currentSeason
                             show.currentEpisode = self.currentEpisode
                         else:
-                            if int(self.currentEpisode) > int(show.currentEpisode):
+                            if int(self.currentSeason) == int(show.currentSeason) and int(self.currentEpisode) > int(show.currentEpisode):
                                 show.currentEpisode = self.currentEpisode
                 if found:
                     should_insert = False
@@ -58,3 +75,4 @@ class TvShows:
         else:
             should_insert = False
         return should_insert
+
