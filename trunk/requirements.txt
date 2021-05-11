@@ -1,6 +1,6 @@
-certifi==2020.4.5.2
-chardet==3.0.4
-idna==2.9
-parse-torrent-title==2.0
-requests==2.23.0
-urllib3==1.25.9
+certifi
+chardet
+idna
+parse-torrent-title
+requests
+urllib3

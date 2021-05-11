@@ -21,7 +21,7 @@ class EZtvTorrent:
 
 class EZtv:
     def __init__(self):
-        self.search_url_imdb = 'https://eztv.io/api/get-torrents?imdb_id='
+        self.search_url_imdb = 'https://eztv.re/api/get-torrents?imdb_id='
         pass
 
     def search_torrents(self, imdb_id, pagenumber):
