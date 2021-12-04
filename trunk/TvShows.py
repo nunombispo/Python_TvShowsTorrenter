@@ -66,6 +66,8 @@ class TvShows:
                             show.currentSeason = self.currentSeason
                             show.currentEpisode = self.currentEpisode
                         else:
+                            if type(show.currentEpisode) == list:
+                                show.currentEpisode = show.currentEpisode[-1]
                             if int(self.currentSeason) == int(show.currentSeason) and int(self.currentEpisode) > int(show.currentEpisode):
                                 show.currentEpisode = self.currentEpisode
                 if found:
