@@ -43,6 +43,8 @@ class TvShows:
                 self.tvShowName = self.tvShowName[:-2].strip()
             self.currentSeason = info['season']
             self.currentEpisode = info['episode']
+            if type(self.currentEpisode) == list:
+                self.currentEpisode = self.currentEpisode[-1]
         except KeyError:
             self.imdb_id = None
             self.tvShowName = None
@@ -66,8 +68,6 @@ class TvShows:
                             show.currentSeason = self.currentSeason
                             show.currentEpisode = self.currentEpisode
                         else:
-                            if type(show.currentEpisode) == list:
-                                show.currentEpisode = show.currentEpisode[-1]
                             if int(self.currentSeason) == int(show.currentSeason) and int(self.currentEpisode) > int(show.currentEpisode):
                                 show.currentEpisode = self.currentEpisode
                 if found:
