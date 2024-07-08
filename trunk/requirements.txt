@@ -4,3 +4,5 @@ idna
 parse-torrent-title
 requests
 urllib3
+playwright
+bs4
