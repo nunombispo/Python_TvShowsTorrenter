@@ -1,0 +1,7 @@
+requests>=2.32.0,<3
+urllib3>=2,<3
+charset_normalizer>=3,<4
+playwright>=1.40,<2
+beautifulsoup4>=4.12,<5
+parse-torrent-title
+

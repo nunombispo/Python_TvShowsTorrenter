@@ -1,4 +1,5 @@
 from operator import attrgetter
+import os
 
 from Settings import Settings
 from MediaParser import MediaParser
@@ -9,19 +10,30 @@ from EZtv import EZtv
 def check_settings():
     # Check settings valid
     settings.check_settings()
+    media_path = settings.get_media_path()
+    download_folder = settings.get_download_folder()
+    print(f"Media path: {media_path}")
+    print(f"Download folder: {download_folder}")
 
 
 def process_files():
     # Process media files
     media_path = settings.get_media_path()
     media_parser = MediaParser()
-    return media_parser.process_media(media_path)
+    files = media_parser.process_media(media_path)
+    print(f"Found {len(files)} media files")
+    return files
 
 
 def process_tvshows():
     list_tvshows = []
     list_files = process_files()
+    max_shows_env = os.getenv("MAX_SHOWS")
+    max_shows = int(max_shows_env) if max_shows_env else None
     for filename in list_files:
+        if max_shows is not None and len(list_tvshows) >= max_shows:
+            print(f"Reached MAX_SHOWS={max_shows}; stopping early for test run.")
+            break
         tvshow = TvShows()
         tvshow.process_filename(filename)
         if tvshow.match_tvshow(list_tvshows):
@@ -50,6 +62,9 @@ def search_tvshows(list_tvshows):
 def main():
     check_settings()
     list_tvshows = process_tvshows()
+    if not list_tvshows:
+        print("No TV shows detected from media path.")
+        return
     search_tvshows(list_tvshows)
 
 

@@ -1,9 +1,12 @@
 import json
+from pathlib import Path
 
 
 class Settings:
     def __init__(self):
-        self.settingsFileName = "settings.json"
+        # Resolve settings file relative to this module so running from
+        # repo root (or elsewhere) still works.
+        self.settingsFileName = str(Path(__file__).resolve().parent / "settings.json")
         self.settingsData = None
 
     def get_media_path(self):

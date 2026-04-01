@@ -3,7 +3,7 @@ from json import JSONDecodeError
 from time import sleep
 
 import requests
-from bs4 import BeautifulSoup
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from playwright.sync_api import sync_playwright
 
 
@@ -27,6 +27,29 @@ class EZtv:
         self.search_url_imdb = 'https://eztv1.xyz/api/get-torrents?imdb_id='
         pass
 
+    def _fetch_json_with_requests(self, url):
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        return resp.json()
+
+    def _fetch_json_with_playwright(self, url):
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            try:
+                page = browser.new_page()
+                page.set_default_navigation_timeout(15000)
+                page.set_default_timeout(15000)
+                page.goto(url, wait_until="domcontentloaded")
+                # If the API returns JSON rendered inside <pre>, grab it.
+                pre = page.locator("pre").first
+                if pre.count() > 0:
+                    text = pre.inner_text()
+                else:
+                    text = page.content()
+                return json.loads(text)
+            finally:
+                browser.close()
+
     def search_torrents(self, imdb_id, pagenumber):
         torrent_list = []
         if pagenumber > 1:
@@ -34,26 +57,17 @@ class EZtv:
         else:
             search_url = self.search_url_imdb + str(imdb_id)
         print(search_url)
-        with sync_playwright() as p:
+        try:
             try:
-                browser = p.chromium.launch(headless=False,args=["--start-maximized"])
-                page = browser.new_page()
-                page.goto(search_url)
-                page.wait_for_timeout(500)
-                html = page.content()
-                # With BeautifulSoup get content from tag <pre>
-                soup = BeautifulSoup(html, "html.parser")
-                # Extract content from <pre> tag
-                pre_content = soup.find("pre").text
-                # Convert to JSON
-                eztv_json = json.loads(pre_content)
-                if int(eztv_json['torrents_count']) > 0:
-                    if 'torrents' in eztv_json:
-                        for torrent_json in eztv_json['torrents']:
-                            eztv_torrent = EZtvTorrent(torrent_json)
-                            torrent_list.append(eztv_torrent)
-            except JSONDecodeError as e:
-                print(str(e.msg))
+                eztv_json = self._fetch_json_with_playwright(search_url)
+            except (PlaywrightTimeoutError, OSError, ValueError, JSONDecodeError) as e:
+                print(f"Playwright fetch failed, falling back to requests: {e}")
+                eztv_json = self._fetch_json_with_requests(search_url)
+            if int(eztv_json.get('torrents_count', 0)) > 0 and 'torrents' in eztv_json:
+                for torrent_json in eztv_json['torrents']:
+                    torrent_list.append(EZtvTorrent(torrent_json))
+        except (requests.RequestException, JSONDecodeError, ValueError) as e:
+            print(f"EZTV request/parse error: {e}")
         return torrent_list
 
     def search_imdb(self, name, imdb_id, season, episode, next_season, next_episode):
@@ -90,10 +104,10 @@ class EZtv:
         assert isinstance(torrent, EZtvTorrent)
         url = torrent.torrent_url
         filename = url.split("/")[-1]
-        with requests.get(url) as request:
+        with requests.get(url, timeout=30) as request:
             print('Downloading torrent file ' + torrent.filename + ' ...')
             if request.status_code == 200:
-                with open(downloadfolder_path + '/ ' + filename, 'wb') as f:
+                with open(downloadfolder_path + '/' + filename, 'wb') as f:
                     f.write(request.content)
                     return True
             else:
